@@ -109,6 +109,7 @@ for my $worksheet ( $workbook->worksheets() ) {
                 } else {
                  $dl = $ns->delimiter;
                 }
+                bless $cell, "Spreadsheet::ParseExcel::Cell";
                 my $val = $cell->value();
                 $val =~ s/$dl/(delimiter)/g;
                 #$val =~ s/\W//g;
