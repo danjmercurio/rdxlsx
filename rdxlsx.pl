@@ -1,12 +1,9 @@
 #!/usr/bin/perl -w
 
 use strict;
-use warnings;
 use Spreadsheet::ParseExcel;
 use Getopt::ArgParse;
-use Spreadsheet::ParseXLSX;
-
-
+#use Spreadsheet::ParseXLSX;
 
 my $ap = Getopt::ArgParse->new_parser(
         prog => 'rd_xls',
@@ -60,36 +57,16 @@ sub printFontInfo {
     my $format = $cell->get_format();
     print $format->{Font}->{Name};
     print " ";
-
-
-
 }
 
 my $workbook;
 my $excelparser;
 
-if (substr($ns->excel_file,-4) eq 'xlsx') {
+$excelparser = Spreadsheet::ParseExcel->new();
+$workbook = $excelparser->parse($ns->excel_file);
 
-    #print "\nxlsx file detected\n";
-    $excelparser = Spreadsheet::ParseXLSX->new();
-    $workbook = $excelparser->parse($ns->excel_file);
-
-    if ( !defined $workbook ) {
-        die $excelparser->error(), ".\n";
-    }
-
-
-} else {
-
-    $excelparser = Spreadsheet::ParseExcel->new();
-    $workbook = $excelparser->parse($ns->excel_file);
-
-
-
-    if ( !defined $workbook ) {
-        die $excelparser->error(), ".\n";
-    }
-
+if ( !defined $workbook ) {
+    die $excelparser->error(), ".\n";
 }
 
 for my $worksheet ( $workbook->worksheets() ) {
