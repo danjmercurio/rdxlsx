@@ -22,8 +22,9 @@ my $printBorderOption = 0;
 my $printCellColorOption = 0;
 my $printFontOption = 0;
 
-print "Delimiter: ".$ns->delimiter."\n";
-print "File: ".$ns->excel_file."\n";
+# Enable for debugging
+# print "Delimiter: ".$ns->delimiter."\n";
+# print "File: ".$ns->excel_file."\n";
 my @options = split("", $ns->a);
 
 if ("b" ~~ @options) {
