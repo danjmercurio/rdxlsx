@@ -1,0 +1,171 @@
+#!/usr/bin/perl -w
+
+#rd_xls - parse an .xls document and print cell info to STDOUT 
+
+use Spreadsheet::ParseExcel;
+use warnings;
+use open ':std', ':encoding(UTF-8)';
+
+my $printExtraInfo = 0;
+my $extraArgs;
+
+my $numArgs = $#ARGV;
+my $filename;
+my $flg;
+my @argsArray;
+my $delimiter="\t";
+
+
+if ($numArgs == -1) {
+    print "Not enough arguments. Supply a delimiter and filename.\n";
+    print "Usage: ./rd_xls <delimiter (tb for tab)> [optional: -a b,c,f] <filename>\n";
+    exit 1;
+
+};
+
+if ($numArgs == 1) {
+    $flg = $ARGV[0];
+    $filename = $ARGV[1];
+    if($flg ne "tb") { $delimiter = $flg; }
+}
+
+if ($numArgs > 1) {
+    $flg = $ARGV[0];
+    if($flg ne "tb") { $delimiter = $flg; }
+    if ($ARGV[1] eq '-a') {
+        $printExtraInfo = 1;
+        $extraArgs = $ARGV[2];
+        @argsArray = $extraArgs =~ /./g;
+
+    }
+    $filename = $ARGV[$numArgs];
+
+}
+
+
+my $e = new Spreadsheet::ParseExcel;
+my $eBook = $e->Parse($filename);
+
+my $sheets = $eBook->{SheetCount};
+my ($eSheet, $sheetName);
+my $s = ",";
+
+#print border type subroutine
+sub printBorderType {
+    $cell = $_[0];
+    $format = $cell->get_format();
+    my @borderArray = $format->{BdrStyle}; 
+            my $left = $borderArray[0][0];
+            my $right = $borderArray[0][1];
+            my $top = $borderArray[0][2];
+            my $bottom = $borderArray[0][3];
+            print "bw:" . $left;
+            print " " . $right;
+            print " " . $top;
+            print " " . $bottom;
+            print ";";
+
+}
+
+#print cell color subroutine
+sub printCellColor {
+    $cell = $_[0];
+    $format = $cell->get_format();
+    print "bg:";
+    print $format->{Fill}->[1];
+    print ";";
+    #array location 1 is the FOREGROUND color
+}
+
+#print font info subroutine
+sub printFontInfo {
+    print "ft: ";
+    $cell = $_[0];
+    $format = $cell->get_format();
+    print $format->{Font}->{Name};
+    print ";";
+}
+
+#print border Diagonal subroutine
+sub printBorderDiag {
+    $cell = $_[0];
+    $format = $cell->get_format();
+    my @borderArray = $format->{BdrDiag}; 
+            my $left = $borderArray[0][0];
+            my $right = $borderArray[0][1];
+            my $top = $borderArray[0][2];
+            print "dg:" . $left;
+            print " " . $right;
+            print " " . $top;
+            print ";";
+
+}
+
+#subroutine for printing the delimiter, if arg[0] is tb print \t
+
+#print border Color subroutine
+sub printBorderColor {
+    $cell = $_[0];
+    $format = $cell->get_format();
+    my @borderArray = $format->{BdrColor}; 
+            my $left = $borderArray[0][0];
+            my $right = $borderArray[0][1];
+            my $top = $borderArray[0][2];
+            my $bottom = $borderArray[0][3];
+            print "bc:" . $left;
+            print " " . $right;
+            print " " . $top;
+            print " " . $bottom;
+            print ";";
+
+}
+
+foreach my $sheet (0 .. $sheets - 1) {
+    $eSheet = $eBook->{Worksheet}[$sheet];
+    $sheetName = $eSheet->{Name};
+    print "Worksheet $sheet: $sheetName\n";
+    next unless (exists ($eSheet->{MaxRow}) and (exists ($eSheet->{MaxCol})));
+    foreach my $row ($eSheet->{MinRow} .. $eSheet->{MaxRow}) {
+        foreach my $column ($eSheet->{MinCol} .. $eSheet->{MaxCol}) {
+
+        if (defined $eSheet->{Cells}[$row][$column]) {
+
+        $currentCell = $eSheet->{Cells}[$row][$column];
+        #if $currentCell's value contains any special characters, drop them
+        $val = $currentCell->Value;
+	$val =~ s/(\r|\n|\Q$delimiter\E)/ /g;
+        #$val =~ s/\s//g;
+        if ($val ne '') {print $val;};
+        if ($printExtraInfo == 1) 
+        {
+	    print $delimiter;
+            foreach $i (@argsArray) {
+                if ($i eq 'b') {
+                    &printBorderType($currentCell);
+                }
+                if ($i eq 'o') {
+                    &printBorderColor($currentCell);
+                }
+                if ($i eq 'c') {
+                    &printCellColor($currentCell);
+                }
+                if ($i eq 'f') {
+                    &printFontInfo($currentCell);
+                }
+                if ($i eq 'd') {
+                    &printBorderDiag($currentCell);
+                }
+
+            };
+            
+            
+
+        };
+    }else{
+        print "";
+    }
+        print $delimiter;
+        }
+        print "\n";
+    }
+}

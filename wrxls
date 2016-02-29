@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+#script from cpam
+use Spreadsheet::WriteExcel;
+my $flg = shift(@ARGV);
+# added option to uise stdout rather than filename
+binmode(STDOUT);
+my $workbook  = Spreadsheet::WriteExcel->new(\*STDOUT);
+
+# completely guessed that I could dope-in stdin
+my $worksheet = $workbook->add_worksheet();
+open(FH,"<-") or die "Cannot open file: $!\n";
+
+my ($x,$y) = (0,0);
+my ($linecount) = 0;
+
+$worksheet->set_column('A:G', 20);
+while (<FH>){
+chomp;
+$linecount++;
+
+if ( $linecount == 1 ) {
+#Line one holds quoted, comma separated WIDTHS for columns
+#first variable for column A, second for column B, etc.
+#example  "A:20","B:30","C:10"  etc
+
+# $col = "A"
+# $wid = "20"
+#$worksheet->set_column($col, $wid);
+#could have programmed this better for COMMA or TAB
+if ( $flg eq "tb" ) {
+ @list = split '\t',$_;
+}else{
+ @list = split ',',$_;
+}
+ foreach my $g (@list){
+
+# Hack #2 - remove quotation marks if found
+# this is a HUGE hack that must be fixed because
+# quotes are only quotes in the FIRST and LAST position
+# otherwise they are part of the data
+	$g =~ tr/"//d;
+
+@props = split (':',$g);
+
+my $v1 = $props[0].":".$props[0];
+
+$worksheet->set_column($v1 , $props[1]);
+    	#$worksheet->write($x, $y++, $v1);
+ }
+
+}else{
+
+#could have programmed this better for COMMA or TAB
+if ( $flg eq "tb" ) {
+ @list = split '\t',$_;
+}else{
+ @list = split ',',$_;
+}
+ foreach my $c (@list){
+
+# Hack #2 - remove quotation marks if found
+# this is a HUGE hack that must be fixed because
+# quotes are only quotes in the FIRST and LAST position
+# otherwise they are part of the data
+	$c =~ tr/"//d;
+
+    	$worksheet->write($x, $y++, $c);
+ }
+ $x++;$y=0;
+}
+}
+close(FH);
+$workbook->close();
