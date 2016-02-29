@@ -3,21 +3,38 @@
 use strict;
 use Spreadsheet::ParseExcel;
 use Getopt::ArgParse;
-#use Spreadsheet::ParseXLSX;
 
 my $ap = Getopt::ArgParse->new_parser(
         prog => 'rd_xls',
-        help => 'usage: rd_xls -d <delimiter> -x <excel file> [-c,--colors -b,--borders -f,--fonts]',
+        help => 'usage: rd_xls <delimiter> <excel file> [-a b|o|c]',
         description => 'parses excel files',
         epilog => 'by dan mercurio'
     );
-$ap->add_arg('--delimiter','-d',required => 1);
-$ap->add_arg('--excel_file','-x',required => 1);
-$ap->add_arg('--borders','-b',type => 'Bool',required => 0);
-$ap->add_arg('--colors','-c',type => 'Bool',required => 0);
-$ap->add_arg('--font','-f',type => 'Bool', required => 0);
+
+$ap->add_arg('delimiter', required => 1);
+$ap->add_arg('excel_file', required => 1);
+$ap->add_arg('-a', required => 0);
+
 
 my $ns = $ap->parse_args();
+
+my $printBorderOption = 0;
+my $printCellColorOption = 0;
+my $printFontOption = 0;
+
+print "Delimiter: ".$ns->delimiter."\n";
+print "File: ".$ns->excel_file."\n";
+my @options = split("", $ns->a);
+
+if ("b" ~~ @options) {
+    $printBorderOption = 1;
+}
+if ("o" ~~ @options) {
+    $printFontOption = 1;
+}
+if ("c" ~~ @options) {
+    $printCellColorOption = 1;
+}
 
 #print border type subroutine
 sub printBorderType {
@@ -82,9 +99,9 @@ for my $worksheet ( $workbook->worksheets() ) {
                 my $dl;
 
                 if ($ns->delimiter eq 'tb' or $ns->delimiter eq 'tab' or $ns->delimiter eq '\t') {
-                     $dl = "\t";
+                    $dl = "\t";
                 } else {
-                 $dl = $ns->delimiter;
+                    $dl = $ns->delimiter;
                 }
                 bless $cell, "Spreadsheet::ParseExcel::Cell";
                 my $val = $cell->value();
@@ -92,13 +109,13 @@ for my $worksheet ( $workbook->worksheets() ) {
                 #$val =~ s/\W//g;
                 $val =~ s/\n|\r/(character stripped)/g;
                 print $val;
-                if ($ns->borders) {
+                if ($printBorderOption == 1) {
                     &printBorderType($cell);
                 }
-                if ($ns->colors) {
+                if ($printCellColorOption == 1) {
                     &printCellColor($cell);
                 }
-                if ($ns->font) {
+                if ($printFontOption == 1) {
                     &printFontInfo($cell);
                 }
                 print $dl;
